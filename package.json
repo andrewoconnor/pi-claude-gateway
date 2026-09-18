@@ -1,0 +1,69 @@
+{
+	"name": "pi-claude-gateway",
+	"version": "0.1.0",
+	"private": false,
+	"description": "Sign pi in to a self-hosted Claude apps gateway with your identity provider, and export usage telemetry to it.",
+	"license": "MIT",
+	"author": "Andrew O'Connor",
+	"type": "module",
+	"keywords": [
+		"pi-package",
+		"pi-extension",
+		"claude",
+		"anthropic",
+		"llm-gateway",
+		"oauth",
+		"oidc",
+		"opentelemetry"
+	],
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/andrewoconnor/pi-claude-gateway.git"
+	},
+	"homepage": "https://github.com/andrewoconnor/pi-claude-gateway#readme",
+	"bugs": {
+		"url": "https://github.com/andrewoconnor/pi-claude-gateway/issues"
+	},
+	"files": [
+		"extensions",
+		"docs",
+		"verify",
+		"README.md",
+		"CHANGELOG.md",
+		"LICENSE"
+	],
+	"pi": {
+		"extensions": [
+			"./extensions/index.ts"
+		]
+	},
+	"scripts": {
+		"build": "echo 'nothing to build'",
+		"check": "tsc --noEmit && vitest --run",
+		"test": "vitest --run",
+		"test:watch": "vitest",
+		"prepack": "npm run check"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"peerDependencies": {
+		"@earendil-works/pi-ai": "*",
+		"@earendil-works/pi-coding-agent": "*"
+	},
+	"peerDependenciesMeta": {
+		"@earendil-works/pi-ai": {
+			"optional": true
+		},
+		"@earendil-works/pi-coding-agent": {
+			"optional": true
+		}
+	},
+	"devDependencies": {
+		"@earendil-works/pi-ai": "^0.85.1",
+		"@earendil-works/pi-coding-agent": "^0.85.1",
+		"@types/node": "^24.0.0",
+		"typescript": "^5.9.0",
+		"vitest": "^4.1.11"
+	}
+}

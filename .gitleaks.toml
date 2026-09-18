@@ -1,0 +1,79 @@
+# Extends the default gitleaks rules with checks for private infrastructure
+# identifiers. The defaults cover credential shapes only: they do not flag a
+# hostname, a certificate fingerprint, a cloud account id or an internal IP
+# address, which are the values most easily pasted into an example by mistake.
+#
+#   gitleaks dir --config .gitleaks.toml .
+#   gitleaks git --config .gitleaks.toml .
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "private-ipv4-address"
+description = "RFC 1918, CGNAT or link-local address outside the canonical example set"
+regex = '''\b(?:10\.\d{1,3}\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3}|172\.(?:1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|100\.(?:6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d{1,3}\.\d{1,3}|169\.254\.\d{1,3}\.\d{1,3})\b'''
+tags = ["infrastructure"]
+
+[rules.allowlist]
+regexes = [
+  '''^10\.0\.0\.1$''',
+  '''^192\.168\.0\.1$''',
+  '''^192\.168\.1\.1$''',
+  '''^172\.16\.0\.1$''',
+  '''^172\.31\.255\.255$''',
+  '''^169\.254\.1\.1$''',
+  '''^100\.64\.0\.1$''',
+]
+
+[[rules]]
+id = "tls-certificate-fingerprint"
+description = "SHA-256 fingerprint that is not the all-zero placeholder"
+regex = '''\b(?i:[0-9a-f]{64})\b'''
+tags = ["infrastructure"]
+
+[rules.allowlist]
+regexes = ['''^0{64}$''']
+paths = ['''package-lock\.json''']
+
+[[rules]]
+id = "aws-account-id"
+description = "12-digit AWS account id"
+regex = '''\b\d{12}\b'''
+tags = ["infrastructure"]
+
+[rules.allowlist]
+regexes = ['''^0{12}$''']
+paths = ['''package-lock\.json''']
+
+[[rules]]
+id = "unapproved-hostname"
+description = "URL host that is not an example placeholder or a known public service"
+regex = '''(?i)\bhttps?://((?:[a-z0-9-]+\.)+[a-z]{2,})'''
+secretGroup = 1
+tags = ["infrastructure"]
+
+[rules.allowlist]
+regexes = [
+  '''(?i)(^|\.)example\.(com|org|net)$''',
+  '''(?i)^(github\.com|raw\.githubusercontent\.com|objects\.githubusercontent\.com)$''',
+  '''(?i)^(code\.claude\.com|platform\.claude\.com|docs\.claude\.com|claude\.ai)$''',
+  '''(?i)^(registry\.npmjs\.org|www\.npmjs\.com|npmjs\.com)$''',
+  '''(?i)^(keepachangelog\.com|semver\.org|json\.schemastore\.org)$''',
+  '''(?i)^(opencollective\.com|paypal\.me|www\.patreon\.com|tidelift\.com|feross\.org)$''',
+]
+paths = ['''package-lock\.json''']
+
+[[rules]]
+id = "non-example-email"
+description = "Email address outside example.com"
+regex = '''(?i)\b[a-z0-9._%+-]+@((?:[a-z0-9-]+\.)+[a-z]{2,})\b'''
+secretGroup = 1
+tags = ["infrastructure"]
+
+[rules.allowlist]
+regexes = [
+  '''(?i)(^|\.)example\.(com|org|net)$''',
+  '''(?i)^users\.noreply\.github\.com$''',
+]
+paths = ['''package-lock\.json''']
