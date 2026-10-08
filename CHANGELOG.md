@@ -24,4 +24,15 @@ First public release.
 - Certificate fingerprint reporting at login, optional pin enforcement, and a warning when
   the gateway hostname resolves to a public address.
 - An editable model catalog with a `CLAUDE_GATEWAY_MODELS` override.
+- `claude-opus-5-5` (Claude Opus 5.5) as the first entry in the model catalog.
+- `claude-sonnet-5-5` (Claude Sonnet 5.5) in the model catalog.
+- `claude-haiku-5-5` (Claude Haiku 5.5) in the model catalog, with its price tier for prompts
+  over 100,000 tokens.
 - A unit test suite, plus an offline OTLP capture harness under `verify/`.
+
+### Fixed
+
+- Bounded the metric export so the shutdown flush cannot hold the quit path open. pi stops
+  its terminal UI before extension shutdown runs, so an unreachable gateway delayed the exit
+  by about 10 seconds. A Ctrl+C during that pause killed pi before it printed its
+  `To resume this session:` hint.
