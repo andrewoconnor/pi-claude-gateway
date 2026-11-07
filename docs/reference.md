@@ -112,7 +112,7 @@ response.
 
 ### Context windows
 
-Opus 5 and Sonnet 5 have a native 1M-token context window. No beta header and no `[1m]`
+Opus 5.5, Opus 5, Sonnet 5.5, Sonnet 5 and Haiku 5.5 have a native 1M-token context window. No beta header and no `[1m]`
 suffix are needed, so the catalog declares 1M.
 
 Pi auto-compacts at `contextWindow - reserveTokens`. If your upstream caps a model lower
@@ -126,7 +126,7 @@ The catalog sets these deliberately for a gateway transport:
 | Flag | Value | Reason |
 | --- | --- | --- |
 | `supportsLongCacheRetention` | `false` | Gateways support the 5-minute cache TTL only |
-| `forceAdaptiveThinking` | `true` on Opus 5 and Sonnet 5 | Those models require adaptive thinking |
+| `forceAdaptiveThinking` | `true` on Opus 5.5, Opus 5, Sonnet 5.5, Sonnet 5 and Haiku 5.5 | Those models require adaptive thinking |
 | `supportsStrictTools` | unset | A gateway in front of Bedrock is not a first-party Anthropic transport |
 | `supportsMidConvoEffort` | unset | Pi restricts it to a faithful Anthropic Messages transport |
 

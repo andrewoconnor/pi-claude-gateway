@@ -11,6 +11,8 @@ import {
 const SCOPE_NAME = "pi-claude-gateway";
 
 const DEFAULT_INTERVAL_MS = 60_000;
+const INTERVAL_FLUSH_TIMEOUT_MS = 10_000;
+const SHUTDOWN_FLUSH_TIMEOUT_MS = 1_000;
 const START_NANOS = String(Date.now() * 1_000_000);
 const processId = `pi-${process.pid}-${Date.now().toString(36)}`;
 
@@ -73,6 +75,23 @@ function decodeIdentity(token: string): Identity {
 	} catch {
 		return {};
 	}
+}
+
+function withDeadline<T>(promise: Promise<T>, ms: number): Promise<T | undefined> {
+	return new Promise<T | undefined>((resolve) => {
+		const timer = setTimeout(() => resolve(undefined), ms);
+		timer.unref?.();
+		promise.then(
+			(value) => {
+				clearTimeout(timer);
+				resolve(value);
+			},
+			() => {
+				clearTimeout(timer);
+				resolve(undefined);
+			},
+		);
+	});
 }
 
 function attrKeyOf(attrs: Attrs): string {
@@ -179,9 +198,10 @@ export function createTelemetry(pi: any, options: TelemetryOptions) {
 		}
 	}
 
-	async function flush(reason: string) {
+	async function flush(reason: string, timeoutMs: number = INTERVAL_FLUSH_TIMEOUT_MS) {
 		if (exporting || counters.size === 0) return;
-		const bearer = await token();
+		const deadline = Date.now() + timeoutMs;
+		const bearer = await withDeadline(token(), timeoutMs);
 		if (!bearer) return;
 		if (!identity.email) identity = decodeIdentity(bearer);
 		exporting = true;
@@ -195,6 +215,7 @@ export function createTelemetry(pi: any, options: TelemetryOptions) {
 				},
 				redirect: "error",
 				body: JSON.stringify(payload()),
+				signal: AbortSignal.timeout(Math.max(250, deadline - Date.now())),
 			});
 			if (debug()) {
 				const detail = response.ok ? "" : ` ${(await response.text()).slice(0, 200)}`;
@@ -209,7 +230,7 @@ export function createTelemetry(pi: any, options: TelemetryOptions) {
 
 	function start() {
 		if (timer) return;
-		timer = setInterval(() => void flush("interval"), intervalMs());
+		timer = setInterval(() => void flush("interval", INTERVAL_FLUSH_TIMEOUT_MS), intervalMs());
 		timer.unref?.();
 	}
 
@@ -271,7 +292,7 @@ export function createTelemetry(pi: any, options: TelemetryOptions) {
 	pi.on("session_shutdown", async (_event: any, ctx: any) => {
 		context = ctx;
 		stop();
-		await flush("shutdown");
+		await flush("shutdown", SHUTDOWN_FLUSH_TIMEOUT_MS);
 	});
 
 	return { flush, stop };

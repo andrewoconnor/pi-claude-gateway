@@ -306,4 +306,31 @@ describe("createTelemetry", () => {
 		await handlers.session_shutdown({ reason: "quit" }, ctx);
 		expect(bodies).toHaveLength(1);
 	});
+
+	it("aborts the export instead of blocking the quit path", async () => {
+		let aborted = false;
+		vi.stubGlobal("fetch", (_url: string, init: any) => {
+			return new Promise<Response>((_resolve, reject) => {
+				init.signal?.addEventListener("abort", () => {
+					aborted = true;
+					reject(new Error("aborted"));
+				});
+			});
+		});
+		const { handlers, ctx } = harness();
+		await handlers.session_start({ reason: "startup" }, ctx);
+		const started = Date.now();
+		await handlers.session_shutdown({ reason: "quit" }, ctx);
+		expect(aborted).toBe(true);
+		expect(Date.now() - started).toBeLessThan(5_000);
+	});
+
+	it("gives up on a stalled credential read", async () => {
+		const { handlers, ctx, telemetry } = harness({
+			modelRegistry: { getProviderAuth: () => new Promise(() => {}) },
+		});
+		await handlers.session_start({ reason: "startup" }, ctx);
+		await telemetry.flush("test", 50);
+		expect(bodies).toHaveLength(0);
+	});
 });

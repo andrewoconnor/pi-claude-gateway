@@ -38,6 +38,11 @@ describe("selectModels", () => {
 		expect(ids).not.toContain("claude-haiku-4-5-20251001");
 	});
 
+	it("offers Opus 5.5 first, matching the gateway's Opus default", () => {
+		const ids = selectModels(undefined).map((model) => model.id);
+		expect(ids[0]).toBe("claude-opus-5-5");
+	});
+
 	it("returns the requested subset in order", () => {
 		const ids = selectModels("claude-sonnet-5,claude-opus-5").map((model) => model.id);
 		expect(ids).toEqual(["claude-sonnet-5", "claude-opus-5"]);
@@ -65,6 +70,32 @@ describe("selectModels", () => {
 		const [model] = selectModels("claude-opus-5");
 		expect(model.cost.input).toBe(5);
 		expect(model.contextWindow).toBe(1_000_000);
+	});
+
+	it("describes Opus 5.5 as the gateway accepts it", () => {
+		const [model] = selectModels("claude-opus-5-5[1m]");
+		expect(model.id).toBe("claude-opus-5-5");
+		expect(model.cost).toEqual({ input: 4, output: 20, cacheRead: 0.2, cacheWrite: 5 });
+		expect(model.contextWindow).toBe(1_000_000);
+		expect(model.maxTokens).toBe(128_000);
+		expect(model.thinkingLevelMap?.off).toBeNull();
+		expect(model.compat?.forceAdaptiveThinking).toBe(true);
+		expect(model.compat?.supportsTemperature).toBe(false);
+	});
+
+	it("describes Haiku 5.5 with its long-prompt price tier", () => {
+		const [model] = selectModels("claude-haiku-5-5");
+		expect(model.cost).toEqual({
+			input: 0.1,
+			output: 0.5,
+			cacheRead: 0.01,
+			cacheWrite: 0.125,
+			tiers: [{ inputTokensAbove: 100_000, input: 0.5, output: 2.5, cacheRead: 0.05, cacheWrite: 0.625 }],
+		});
+		expect(model.contextWindow).toBe(1_000_000);
+		expect(model.maxTokens).toBe(128_000);
+		expect(model.compat?.forceAdaptiveThinking).toBe(true);
+		expect(model.compat?.supportsTemperature).toBe(false);
 	});
 });
 

@@ -3,7 +3,13 @@ export interface GatewayModel {
 	name: string;
 	reasoning: boolean;
 	input: ("text" | "image")[];
-	cost: { input: number; output: number; cacheRead: number; cacheWrite: number };
+	cost: {
+		input: number;
+		output: number;
+		cacheRead: number;
+		cacheWrite: number;
+		tiers?: { inputTokensAbove: number; input: number; output: number; cacheRead: number; cacheWrite: number }[];
+	};
 	contextWindow: number;
 	maxTokens: number;
 	thinkingLevelMap?: Record<string, string | null>;
@@ -13,6 +19,17 @@ export interface GatewayModel {
 const LONG_CACHE_OFF = { supportsLongCacheRetention: false };
 
 export const CATALOG: GatewayModel[] = [
+	{
+		id: "claude-opus-5-5",
+		name: "Claude Opus 5.5",
+		reasoning: true,
+		input: ["text", "image"],
+		cost: { input: 4, output: 20, cacheRead: 0.2, cacheWrite: 5 },
+		contextWindow: 1_000_000,
+		maxTokens: 128_000,
+		thinkingLevelMap: { off: null, xhigh: "xhigh", max: "max" },
+		compat: { ...LONG_CACHE_OFF, forceAdaptiveThinking: true, supportsTemperature: false },
+	},
 	{
 		id: "claude-opus-5",
 		name: "Claude Opus 5",
@@ -25,6 +42,25 @@ export const CATALOG: GatewayModel[] = [
 		compat: { ...LONG_CACHE_OFF, forceAdaptiveThinking: true, supportsTemperature: false },
 	},
 	{
+		id: "claude-sonnet-5-5",
+		name: "Claude Sonnet 5.5",
+		reasoning: true,
+		input: ["text", "image"],
+		cost: { input: 2, output: 10, cacheRead: 0.2, cacheWrite: 2.5 },
+		contextWindow: 1_000_000,
+		maxTokens: 128_000,
+		thinkingLevelMap: {
+			off: null,
+			minimal: null,
+			low: "low",
+			medium: "medium",
+			high: "high",
+			xhigh: "xhigh",
+			max: "max",
+		},
+		compat: { ...LONG_CACHE_OFF, forceAdaptiveThinking: true, supportsTemperature: false },
+	},
+	{
 		id: "claude-sonnet-5",
 		name: "Claude Sonnet 5",
 		reasoning: true,
@@ -34,6 +70,31 @@ export const CATALOG: GatewayModel[] = [
 		maxTokens: 128_000,
 		thinkingLevelMap: { xhigh: "xhigh", max: "max" },
 		compat: { ...LONG_CACHE_OFF, forceAdaptiveThinking: true },
+	},
+	{
+		id: "claude-haiku-5-5",
+		name: "Claude Haiku 5.5",
+		reasoning: true,
+		input: ["text", "image"],
+		cost: {
+			input: 0.1,
+			output: 0.5,
+			cacheRead: 0.01,
+			cacheWrite: 0.125,
+			tiers: [{ inputTokensAbove: 100_000, input: 0.5, output: 2.5, cacheRead: 0.05, cacheWrite: 0.625 }],
+		},
+		contextWindow: 1_000_000,
+		maxTokens: 128_000,
+		thinkingLevelMap: {
+			off: null,
+			minimal: null,
+			low: "low",
+			medium: "medium",
+			high: "high",
+			xhigh: "xhigh",
+			max: "max",
+		},
+		compat: { ...LONG_CACHE_OFF, forceAdaptiveThinking: true, supportsTemperature: false },
 	},
 	{
 		id: "claude-haiku-4-5",
